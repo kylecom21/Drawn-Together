@@ -2,7 +2,7 @@
   "name": "drawn-together",
   "version": "0.0.0",
   "scripts": {
-    "setup-dbs": "psql -f ./db/seeds/setup.sql",
+    "setup-dbs": "psql -f ./db/setup.sql",
     "seed": "PGPASSWORD=password node ./db/seeds/run-seed.js",
     "ng": "ng",
     "start": "ng serve",
