@@ -1,0 +1,15 @@
+.timer {
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.display {
+  font-size: 2em;
+  margin: 20px 0;
+}
+
+button {
+  padding: 10px 15px;
+  font-size: 1em;
+  cursor: pointer;
+}
