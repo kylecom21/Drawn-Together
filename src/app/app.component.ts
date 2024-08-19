@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { WebsocketTestComponent } from './websocket-test/websocket-test.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  imports: [CommonModule, WebsocketTestComponent],
+  template: `
+    <h1>My App</h1>
+    <app-websocket-test></app-websocket-test>
+  `,
+  styles: [],
 })
-export class AppComponent {
-  title = 'drawn-together';
-}
+export class AppComponent {}
