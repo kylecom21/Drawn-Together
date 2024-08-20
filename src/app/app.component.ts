@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WebsocketTestComponent } from './websocket-test/websocket-test.component';
 import { TimerComponent } from './timer/timer.component';
+import { ChatboxComponent } from './chatbox/chatbox.component';
 import { WhiteboardComponent } from './whiteboard/whiteboard.component';
 
 @Component({
@@ -11,16 +12,33 @@ import { WhiteboardComponent } from './whiteboard/whiteboard.component';
     CommonModule,
     WebsocketTestComponent,
     TimerComponent,
-    WhiteboardComponent,
+    ChatboxComponent,
+    WhiteboardComponent
   ],
   template: `
     <h1>{{ title }}</h1>
-    <app-websocket-test></app-websocket-test>
-    <app-timer></app-timer>
-    <app-whiteboard></app-whiteboard>
+    <div class="app-container">
+      <div class="left-panel">
+        <app-websocket-test></app-websocket-test>
+        <app-timer></app-timer>
+      </div>
+      <div class="right-panel">
+        <app-whiteboard></app-whiteboard>
+        <app-chatbox></app-chatbox>
+      </div>
+    </div>
   `,
-  styleUrl: './app.component.css',
+  styles: [`
+    .app-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .left-panel, .right-panel {
+      width: 48%;
+    }
+  `]
 })
 export class AppComponent {
-  title = 'My Angular App';
+  title = 'Collaborative Workspace';
 }
