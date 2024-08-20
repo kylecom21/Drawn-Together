@@ -29,10 +29,12 @@
     "@ngneat/tailwind": "^7.0.3",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "jest": "^29.7.0",
     "mongodb": "^6.8.0",
     "pg": "^8.12.0",
     "pg-format": "^1.0.4",
     "rxjs": "~7.8.0",
+    "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"
