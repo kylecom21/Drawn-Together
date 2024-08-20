@@ -4,16 +4,18 @@ import {
   ViewChild,
   ElementRef,
   AfterViewInit,
+  Inject,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { WebsocketService } from '../web-socket.service';
+import { PLATFORM_ID } from '@angular/core';
 
 @Component({
   selector: 'app-whiteboard',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="whiteboard-container">
+    <div class="whiteboard-container" *ngIf="isBrowser">
       <canvas #canvas></canvas>
       <div class="tools">
         <input type="color" (change)="setColor($event)" />
@@ -51,33 +53,43 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   private tool = 'brush';
   private undoStack: ImageData[] = [];
   private redoStack: ImageData[] = [];
+  public isBrowser: boolean;
 
-  constructor(private websocketService: WebsocketService) {}
+  constructor(
+    private websocketService: WebsocketService,
+    @Inject(PLATFORM_ID) private platformId: any
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit() {
-    this.websocketService.listen('draw').subscribe((data: any) => {
-      this.drawFromSocket(data);
-    });
+    if (this.isBrowser) {
+      this.websocketService.listen('draw').subscribe((data: any) => {
+        this.drawFromSocket(data);
+      });
 
-    this.websocketService.listen('undo').subscribe(() => {
-      this.undoFromSocket();
-    });
+      this.websocketService.listen('undo').subscribe(() => {
+        this.undoFromSocket();
+      });
 
-    this.websocketService.listen('redo').subscribe(() => {
-      this.redoFromSocket();
-    });
+      this.websocketService.listen('redo').subscribe(() => {
+        this.redoFromSocket();
+      });
+    }
   }
 
   ngAfterViewInit() {
-    const canvas = this.canvasRef.nativeElement;
-    this.ctx = canvas.getContext('2d')!;
-    canvas.width = 800;
-    canvas.height = 600;
+    if (this.isBrowser) {
+      const canvas = this.canvasRef.nativeElement;
+      this.ctx = canvas.getContext('2d')!;
+      canvas.width = 800;
+      canvas.height = 600;
 
-    canvas.addEventListener('mousedown', this.startDrawing.bind(this));
-    canvas.addEventListener('mousemove', this.draw.bind(this));
-    canvas.addEventListener('mouseup', this.stopDrawing.bind(this));
-    canvas.addEventListener('mouseout', this.stopDrawing.bind(this));
+      canvas.addEventListener('mousedown', this.startDrawing.bind(this));
+      canvas.addEventListener('mousemove', this.draw.bind(this));
+      canvas.addEventListener('mouseup', this.stopDrawing.bind(this));
+      canvas.addEventListener('mouseout', this.stopDrawing.bind(this));
+    }
   }
 
   private startDrawing(event: MouseEvent) {
