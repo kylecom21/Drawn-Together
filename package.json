@@ -2,17 +2,12 @@
   "name": "drawn-together",
   "version": "0.0.0",
   "scripts": {
-    "setup-dbs": "psql -f ./db/setup.sql",
-    "seed": "PGPASSWORD=password node ./db/seeds/run-seed.js",
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:drawn-together": "node dist/drawn-together/server/server.mjs",
-    "main": "listen.js",
-    "starting": "node listen.js",
-    "seed-prod": "NODE_ENV=production npm run seed"
+    "serve:ssr:drawn-together": "node dist/drawn-together/server/server.mjs"
   },
   "private": true,
   "dependencies": {
