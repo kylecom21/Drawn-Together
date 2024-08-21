@@ -15,7 +15,7 @@ import { WordComponent } from './word/word.component';
     TimerComponent,
     ChatboxComponent,
     WhiteboardComponent,
-
+    WordComponent,
   ],
   template: `
     <div class="min-h-screen bg-gray-100 flex flex-col">
@@ -43,6 +43,9 @@ import { WordComponent } from './word/word.component';
       </header>
       <main class="flex-grow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div class="mb-6 bg-white shadow rounded-lg p-4">
+            <app-word></app-word>
+          </div>
           <div class="flex flex-col lg:flex-row gap-6">
             <div class="lg:w-3/4">
               <div class="bg-white shadow rounded-lg p-4">
