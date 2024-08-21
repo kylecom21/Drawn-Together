@@ -13,32 +13,57 @@ import { WhiteboardComponent } from './whiteboard/whiteboard.component';
     WebsocketTestComponent,
     TimerComponent,
     ChatboxComponent,
-    WhiteboardComponent
+    WhiteboardComponent,
   ],
   template: `
-    <h1>{{ title }}</h1>
-    <div class="app-container">
-      <div class="left-panel">
-        <app-websocket-test></app-websocket-test>
-        <app-timer></app-timer>
-      </div>
-      <div class="right-panel">
-        <app-whiteboard></app-whiteboard>
-        <app-chatbox></app-chatbox>
-      </div>
+    <div class="min-h-screen bg-gray-100 flex flex-col">
+      <header class="bg-white shadow">
+        <div
+          class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center"
+        >
+          <h1 class="text-2xl font-bold text-gray-900">Drawing Game</h1>
+          <nav>
+            <ul class="flex space-x-4">
+              <li>
+                <a href="#" class="text-gray-600 hover:text-gray-900">Home</a>
+              </li>
+              <li>
+                <a href="#" class="text-gray-600 hover:text-gray-900">Rules</a>
+              </li>
+              <li>
+                <a href="#" class="text-gray-600 hover:text-gray-900"
+                  >Leaderboard</a
+                >
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </header>
+      <main class="flex-grow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div class="flex flex-col lg:flex-row gap-6">
+            <div class="lg:w-3/4">
+              <div class="bg-white shadow rounded-lg p-4">
+                <app-whiteboard></app-whiteboard>
+              </div>
+            </div>
+            <div class="lg:w-1/4 space-y-6">
+              <div class="bg-white shadow rounded-lg p-4">
+                <app-timer></app-timer>
+              </div>
+              <div class="bg-white shadow rounded-lg p-4">
+                <app-chatbox></app-chatbox>
+              </div>
+              <div class="bg-white shadow rounded-lg p-4">
+                <app-websocket-test></app-websocket-test>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   `,
-  styles: [`
-    .app-container {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-    }
-    .left-panel, .right-panel {
-      width: 48%;
-    }
-  `]
 })
 export class AppComponent {
-  title = 'Collaborative Workspace';
+  title = 'Drawing Game';
 }

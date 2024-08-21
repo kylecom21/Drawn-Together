@@ -14,29 +14,17 @@ import { takeWhile } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="timer">
-      <h2>Timer</h2>
-      <div class="display">{{ display }}</div>
-      <button (click)="startTimer(1)">Start 1 Minute Timer</button>
+    <div class="timer text-center font-sans">
+      <h2 class="text-xl font-semibold mb-2">Timer</h2>
+      <div class="display text-4xl font-bold mb-4">{{ display }}</div>
+      <button
+        (click)="startTimer(1)"
+        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200 ease-in-out"
+      >
+        Start 1 Minute Timer
+      </button>
     </div>
   `,
-  styles: [
-    `
-      .timer {
-        text-align: center;
-        font-family: Arial, sans-serif;
-      }
-      .display {
-        font-size: 2em;
-        margin: 20px 0;
-      }
-      button {
-        padding: 10px 15px;
-        font-size: 1em;
-        cursor: pointer;
-      }
-    `,
-  ],
 })
 export class TimerComponent implements OnInit, OnDestroy {
   display: string = '01:00';
