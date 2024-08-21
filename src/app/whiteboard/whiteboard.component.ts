@@ -5,6 +5,7 @@ import {
   ElementRef,
   AfterViewInit,
   Inject,
+  HostListener,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { WebsocketService } from '../web-socket.service';
@@ -15,34 +16,54 @@ import { PLATFORM_ID } from '@angular/core';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="whiteboard-container" *ngIf="isBrowser">
-      <canvas #canvas></canvas>
-      <div class="tools">
-        <input type="color" (change)="setColor($event)" />
-        <input type="range" min="1" max="20" (input)="setBrushSize($event)" />
-        <button (click)="setTool('brush')">Brush</button>
-        <button (click)="setTool('eraser')">Eraser</button>
-        <button (click)="fill()">Fill</button>
-        <button (click)="undo()">Undo</button>
-        <button (click)="redo()">Redo</button>
+    <div *ngIf="isBrowser" class="space-y-4">
+      <canvas #canvas class="w-full border border-gray-300 rounded-lg"></canvas>
+      <div class="flex flex-wrap gap-2 justify-center">
+        <input
+          type="color"
+          (change)="setColor($event)"
+          class="w-8 h-8 rounded-full"
+        />
+        <input
+          type="range"
+          min="1"
+          max="20"
+          (input)="setBrushSize($event)"
+          class="w-32"
+        />
+        <button
+          (click)="setTool('brush')"
+          class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Brush
+        </button>
+        <button
+          (click)="setTool('eraser')"
+          class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+        >
+          Eraser
+        </button>
+        <button
+          (click)="fill()"
+          class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Fill
+        </button>
+        <button
+          (click)="undo()"
+          class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+        >
+          Undo
+        </button>
+        <button
+          (click)="redo()"
+          class="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"
+        >
+          Redo
+        </button>
       </div>
     </div>
   `,
-  styles: [
-    `
-      .whiteboard-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      canvas {
-        border: 1px solid #000;
-      }
-      .tools {
-        margin-top: 10px;
-      }
-    `,
-  ],
 })
 export class WhiteboardComponent implements OnInit, AfterViewInit {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -82,8 +103,8 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
     if (this.isBrowser) {
       const canvas = this.canvasRef.nativeElement;
       this.ctx = canvas.getContext('2d')!;
-      canvas.width = 800;
-      canvas.height = 600;
+      this.resizeCanvas();
+      this.saveState();
 
       canvas.addEventListener('mousedown', this.startDrawing.bind(this));
       canvas.addEventListener('mousemove', this.draw.bind(this));
@@ -92,29 +113,50 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
     }
   }
 
+  @HostListener('window:resize')
+  onResize() {
+    this.resizeCanvas();
+  }
+
+  private resizeCanvas() {
+    const canvas = this.canvasRef.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+  }
+
+  private getMousePos(event: MouseEvent) {
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    const scaleX = this.canvasRef.nativeElement.width / rect.width;
+    const scaleY = this.canvasRef.nativeElement.height / rect.height;
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY,
+    };
+  }
+
   private startDrawing(event: MouseEvent) {
     this.isDrawing = true;
-    this.draw(event);
+    const pos = this.getMousePos(event);
+    this.ctx.beginPath();
+    this.ctx.moveTo(pos.x, pos.y);
   }
 
   private draw(event: MouseEvent) {
     if (!this.isDrawing) return;
 
-    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const pos = this.getMousePos(event);
 
     this.ctx.strokeStyle = this.tool === 'eraser' ? '#FFFFFF' : this.color;
     this.ctx.lineWidth = this.brushSize;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineTo(x, y);
+    this.ctx.lineTo(pos.x, pos.y);
     this.ctx.stroke();
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, y);
 
     this.websocketService.emit('draw', {
-      x,
-      y,
+      x: pos.x,
+      y: pos.y,
       color: this.color,
       brushSize: this.brushSize,
       tool: this.tool,
@@ -123,7 +165,7 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
 
   private stopDrawing() {
     if (this.isDrawing) {
-      this.ctx.beginPath();
+      this.ctx.closePath();
       this.isDrawing = false;
       this.saveState();
     }
@@ -132,7 +174,6 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   private drawFromSocket(data: any) {
     this.ctx.strokeStyle = data.tool === 'eraser' ? '#FFFFFF' : data.color;
     this.ctx.lineWidth = data.brushSize;
-    this.ctx.lineCap = 'round';
     this.ctx.lineTo(data.x, data.y);
     this.ctx.stroke();
     this.ctx.beginPath();
@@ -164,84 +205,39 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   }
 
   undo() {
-    if (this.undoStack.length > 0) {
-      const imageData = this.undoStack.pop();
-      if (imageData) {
-        this.redoStack.push(
-          this.ctx.getImageData(
-            0,
-            0,
-            this.canvasRef.nativeElement.width,
-            this.canvasRef.nativeElement.height
-          )
-        );
-        this.ctx.putImageData(imageData, 0, 0);
-        this.websocketService.emit('undo', { action: 'undo' });
-      }
+    if (this.undoStack.length > 1) {
+      this.redoStack.push(this.undoStack.pop()!);
+      const imageData = this.undoStack[this.undoStack.length - 1];
+      this.ctx.putImageData(imageData, 0, 0);
+      this.websocketService.emit('undo', { action: 'undo' });
     }
   }
 
   redo() {
     if (this.redoStack.length > 0) {
-      const imageData = this.redoStack.pop();
-      if (imageData) {
-        this.undoStack.push(
-          this.ctx.getImageData(
-            0,
-            0,
-            this.canvasRef.nativeElement.width,
-            this.canvasRef.nativeElement.height
-          )
-        );
-        this.ctx.putImageData(imageData, 0, 0);
-        this.websocketService.emit('redo', { action: 'redo' });
-      }
+      const imageData = this.redoStack.pop()!;
+      this.ctx.putImageData(imageData, 0, 0);
+      this.undoStack.push(imageData);
+      this.websocketService.emit('redo', { action: 'redo' });
     }
   }
 
   private undoFromSocket() {
-    if (this.undoStack.length > 0) {
-      const imageData = this.undoStack.pop();
-      if (imageData) {
-        this.redoStack.push(
-          this.ctx.getImageData(
-            0,
-            0,
-            this.canvasRef.nativeElement.width,
-            this.canvasRef.nativeElement.height
-          )
-        );
-        this.ctx.putImageData(imageData, 0, 0);
-      }
-    }
+    this.undo();
   }
 
   private redoFromSocket() {
-    if (this.redoStack.length > 0) {
-      const imageData = this.redoStack.pop();
-      if (imageData) {
-        this.undoStack.push(
-          this.ctx.getImageData(
-            0,
-            0,
-            this.canvasRef.nativeElement.width,
-            this.canvasRef.nativeElement.height
-          )
-        );
-        this.ctx.putImageData(imageData, 0, 0);
-      }
-    }
+    this.redo();
   }
 
   private saveState() {
-    this.undoStack.push(
-      this.ctx.getImageData(
-        0,
-        0,
-        this.canvasRef.nativeElement.width,
-        this.canvasRef.nativeElement.height
-      )
+    const imageData = this.ctx.getImageData(
+      0,
+      0,
+      this.canvasRef.nativeElement.width,
+      this.canvasRef.nativeElement.height
     );
+    this.undoStack.push(imageData);
     this.redoStack = [];
   }
 }
