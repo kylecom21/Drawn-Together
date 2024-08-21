@@ -4,6 +4,7 @@ import { WebsocketTestComponent } from './websocket-test/websocket-test.componen
 import { TimerComponent } from './timer/timer.component';
 import { ChatboxComponent } from './chatbox/chatbox.component';
 import { WhiteboardComponent } from './whiteboard/whiteboard.component';
+import { WordComponent } from './word/word.component';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +15,7 @@ import { WhiteboardComponent } from './whiteboard/whiteboard.component';
     TimerComponent,
     ChatboxComponent,
     WhiteboardComponent,
+
   ],
   template: `
     <div class="min-h-screen bg-gray-100 flex flex-col">
