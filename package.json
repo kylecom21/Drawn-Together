@@ -8,7 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:drawn-together": "node dist/drawn-together/server/server.mjs",
-    "build:prod": "ng build --configuration=production && ng run your-app-name:server:production"
+    "build:prod": "ng build --configuration=production"
   },
   "private": true,
   "dependencies": {
