@@ -1,15 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Word } from '../../../api';
+import { WordLengthComponent } from '../word-length/word-length.component';
 
 @Component({
   selector: 'app-word',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WordLengthComponent],
   template: `
     <div class="word-container">
       <h2 class="word-title">Current Word:</h2>
       <div class="word-display">{{ word }}</div>
+      <div><app-word-length [word]="word"></app-word-length></div>
     </div>
   `,
   styles: [
