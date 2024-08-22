@@ -10,7 +10,10 @@ export class WebsocketService {
   private socket: Socket;
 
   constructor() {
-    this.socket = io(environment.websocketUrl, { autoConnect: false });
+    this.socket = io(environment.websocketUrl, {
+      autoConnect: false,
+      transports: ['websocket'],
+    });
   }
 
   connect() {
