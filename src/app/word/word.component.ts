@@ -10,8 +10,10 @@ import { WordLengthComponent } from '../word-length/word-length.component';
   template: `
     <div class="word-container">
       <h2 class="word-title">Current Word:</h2>
-      <div class="word-display">{{ word }}</div>
-      <div><app-word-length [word]="word"></app-word-length></div>
+      <div class="word-info">
+        <div class="word-display">{{ word }}</div>
+        <app-word-length [word]="word"></app-word-length>
+      </div>
     </div>
   `,
   styles: [
@@ -28,6 +30,12 @@ import { WordLengthComponent } from '../word-length/word-length.component';
         font-weight: bold;
         color: #4a5568;
         margin-bottom: 0.5rem;
+      }
+      .word-info {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
       }
       .word-display {
         font-size: 2rem;
