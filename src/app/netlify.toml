@@ -1,9 +1,8 @@
 [build]
-  publish = "dist/drawn-together"
+  publish = "dist/drawn-together/browser"
   command = "ng build --configuration=production"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  
