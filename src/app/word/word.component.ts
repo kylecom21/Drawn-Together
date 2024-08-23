@@ -13,7 +13,7 @@ import { Word } from '../../../api';
       <div class="word-container">
         <h2 class="word-title">Current Word:</h2>
         <div class="word-info">
-          <div class="word-display">{{ Word }}</div>
+          <div class="word-display">{{ word }}</div>
           <app-word-length [word]="word"></app-word-length>
         </div>
       </div>
@@ -57,10 +57,15 @@ export class WordComponent implements OnInit {
   word: string = '';
   isActiveDrawer: boolean = false;
 
-  constructor(private websocketService: WebsocketService) {}
+  constructor(private websocketService: WebsocketService, private wordService: Word) {}
 
   ngOnInit() {
+    
     this.setupSocketListeners();
+
+    this.wordService.getWord().subscribe((response) => {
+      this.word = response.word
+    })
   }
 
   private setupSocketListeners() {
