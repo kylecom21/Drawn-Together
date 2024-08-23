@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Input } from '@angular/core';
+import { CommonModule, NgIf } from '@angular/common';
 import { Word } from '../../../api';
 import { WordLengthComponent } from '../word-length/word-length.component';
 
@@ -52,12 +52,16 @@ import { WordLengthComponent } from '../word-length/word-length.component';
 })
 export class WordComponent implements OnInit {
   word: string = '';
-
+  @Input() isActiveDrawer: boolean = false;
   constructor(private wordService: Word) {}
 
   ngOnInit(): void {
     this.wordService.getWord().subscribe((response) => {
-      this.word = response.word;
+      if(this.isActiveDrawer){
+        this.word = response.word;
+      } else {
+        this.word = 'Guess the word...'
+      }
     });
   }
 }

@@ -10,11 +10,12 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { WebsocketService } from '../web-socket.service';
+import { WordComponent } from '../word/word.component';
 
 @Component({
   selector: 'app-whiteboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WordComponent],
   template: `
     <div class="space-y-4">
       <canvas #canvas class="w-full border border-gray-300 rounded-lg"></canvas>
@@ -65,6 +66,7 @@ import { WebsocketService } from '../web-socket.service';
       <div *ngIf="!isActiveDrawer" class="text-center">
         <p>Another player is drawing. Try to guess what it is!</p>
       </div>
+      <app-word [isActiveDrawer]="isActiveDrawer"></app-word>
     </div>
   `,
 })
