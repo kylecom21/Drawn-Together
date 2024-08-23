@@ -18,6 +18,11 @@ import { Word } from '../../../api';
         </div>
       </div>
     </div>
+    <div *ngIf="!isActiveDrawer" class="text-center font-bold text-xl">
+      <div class="word-container">
+        <app-word-length [word]="word"></app-word-length>
+      </div>
+    </div>
   `,
   styles: [
     `
@@ -57,15 +62,17 @@ export class WordComponent implements OnInit {
   word: string = '';
   isActiveDrawer: boolean = false;
 
-  constructor(private websocketService: WebsocketService, private wordService: Word) {}
+  constructor(
+    private websocketService: WebsocketService,
+    private wordService: Word
+  ) {}
 
   ngOnInit() {
-    
     this.setupSocketListeners();
 
     this.wordService.getWord().subscribe((response) => {
-      this.word = response.word
-    })
+      this.word = response.word;
+    });
   }
 
   private setupSocketListeners() {

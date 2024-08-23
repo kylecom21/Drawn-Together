@@ -66,7 +66,6 @@ import { WordComponent } from '../word/word.component';
       <div *ngIf="!isActiveDrawer" class="text-center">
         <p>Another player is drawing. Try to guess what it is!</p>
       </div>
-      <app-word></app-word>
     </div>
   `,
 })
