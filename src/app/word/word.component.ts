@@ -1,6 +1,6 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { CommonModule, NgIf } from '@angular/common';
-import { Word } from '../../../api';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { WebsocketService } from '../web-socket.service';
 import { WordLengthComponent } from '../word-length/word-length.component';
 
 @Component({
@@ -8,11 +8,13 @@ import { WordLengthComponent } from '../word-length/word-length.component';
   standalone: true,
   imports: [CommonModule, WordLengthComponent],
   template: `
-    <div class="word-container">
-      <h2 class="word-title">Current Word:</h2>
-      <div class="word-info">
-        <div class="word-display">{{ word }}</div>
-        <app-word-length [word]="word"></app-word-length>
+    <div *ngIf="isActiveDrawer" class="text-center font-bold text-xl">
+      <div class="word-container">
+        <h2 class="word-title">Current Word:</h2>
+        <div class="word-info">
+          <div class="word-display">{{ word }}</div>
+          <app-word-length [word]="word"></app-word-length>
+        </div>
       </div>
     </div>
   `,
@@ -52,16 +54,25 @@ import { WordLengthComponent } from '../word-length/word-length.component';
 })
 export class WordComponent implements OnInit {
   word: string = '';
-  @Input() isActiveDrawer: boolean = false;
-  constructor(private wordService: Word) {}
+  isActiveDrawer: boolean = false;
 
-  ngOnInit(): void {
-    this.wordService.getWord().subscribe((response) => {
-      if(this.isActiveDrawer){
-        this.word = response.word;
-      } else {
-        this.word = 'Guess the word...'
-      }
+  constructor(private websocketService: WebsocketService) {}
+
+  ngOnInit() {
+    this.setupSocketListeners();
+  }
+
+  private setupSocketListeners() {
+    this.websocketService.listen('new-word').subscribe((data: any) => {
+      this.word = data.word;
+    });
+
+    this.websocketService.listen('start-drawing').subscribe(() => {
+      this.isActiveDrawer = true;
+    });
+
+    this.websocketService.listen('end-drawing').subscribe(() => {
+      this.isActiveDrawer = false;
     });
   }
 }
