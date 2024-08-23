@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WebsocketService } from '../web-socket.service';
 import { WordLengthComponent } from '../word-length/word-length.component';
+import { Word } from '../../../api';
 
 @Component({
   selector: 'app-word',
@@ -12,7 +13,7 @@ import { WordLengthComponent } from '../word-length/word-length.component';
       <div class="word-container">
         <h2 class="word-title">Current Word:</h2>
         <div class="word-info">
-          <div class="word-display">{{ word }}</div>
+          <div class="word-display">{{ Word }}</div>
           <app-word-length [word]="word"></app-word-length>
         </div>
       </div>
