@@ -11,6 +11,7 @@ h2 {
 
 .button-group {
   margin-bottom: 20px;
+  display:inline;
 }
 
 button {
