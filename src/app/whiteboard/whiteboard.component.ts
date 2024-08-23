@@ -5,20 +5,21 @@ import {
   ElementRef,
   AfterViewInit,
   Inject,
-  HostListener,
+  PLATFORM_ID,
+  NgZone,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { WebsocketService } from '../web-socket.service';
-import { PLATFORM_ID } from '@angular/core';
+import { WordComponent } from '../word/word.component';
 
 @Component({
   selector: 'app-whiteboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WordComponent],
   template: `
-    <div *ngIf="isBrowser" class="space-y-4">
+    <div class="space-y-4">
       <canvas #canvas class="w-full border border-gray-300 rounded-lg"></canvas>
-      <div class="flex flex-wrap gap-2 justify-center">
+      <div *ngIf="isActiveDrawer" class="flex flex-wrap gap-2 justify-center">
         <input
           type="color"
           (change)="setColor($event)"
@@ -62,12 +63,15 @@ import { PLATFORM_ID } from '@angular/core';
           Redo
         </button>
       </div>
+      <div *ngIf="!isActiveDrawer" class="text-center">
+        <p>Another player is drawing. Try to guess what it is!</p>
+      </div>
     </div>
   `,
 })
 export class WhiteboardComponent implements OnInit, AfterViewInit {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
-  private ctx!: CanvasRenderingContext2D;
+  private ctx!: CanvasRenderingContext2D | null;
   private isDrawing = false;
   private color = '#000000';
   private brushSize = 5;
@@ -75,50 +79,78 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   private undoStack: ImageData[] = [];
   private redoStack: ImageData[] = [];
   public isBrowser: boolean;
+  public isActiveDrawer = false;
 
   constructor(
     private websocketService: WebsocketService,
-    @Inject(PLATFORM_ID) private platformId: any
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private ngZone: NgZone
   ) {
-    this.isBrowser = isPlatformBrowser(platformId);
+    this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
   ngOnInit() {
     if (this.isBrowser) {
-      this.websocketService.listen('draw').subscribe((data: any) => {
-        this.drawFromSocket(data);
-      });
-
-      this.websocketService.listen('undo').subscribe(() => {
-        this.undoFromSocket();
-      });
-
-      this.websocketService.listen('redo').subscribe(() => {
-        this.redoFromSocket();
-      });
+      this.setupSocketListeners();
     }
   }
 
   ngAfterViewInit() {
     if (this.isBrowser) {
-      const canvas = this.canvasRef.nativeElement;
-      this.ctx = canvas.getContext('2d')!;
-      this.resizeCanvas();
-      this.saveState();
-
-      canvas.addEventListener('mousedown', this.startDrawing.bind(this));
-      canvas.addEventListener('mousemove', this.draw.bind(this));
-      canvas.addEventListener('mouseup', this.stopDrawing.bind(this));
-      canvas.addEventListener('mouseout', this.stopDrawing.bind(this));
+      this.ngZone.runOutsideAngular(() => {
+        this.setupCanvas();
+      });
     }
   }
 
-  @HostListener('window:resize')
-  onResize() {
+  private setupSocketListeners() {
+    if (!this.isBrowser) return;
+
+    this.websocketService.listen('draw').subscribe((data: any) => {
+      this.drawFromSocket(data);
+    });
+
+    this.websocketService.listen('undo').subscribe(() => {
+      this.undoFromSocket();
+    });
+
+    this.websocketService.listen('redo').subscribe(() => {
+      this.redoFromSocket();
+    });
+
+    this.websocketService.listen('fill').subscribe((data: any) => {
+      this.fillFromSocket(data);
+    });
+
+    this.websocketService.listen('start-drawing').subscribe(() => {
+      this.isActiveDrawer = true;
+    });
+
+    this.websocketService.listen('end-drawing').subscribe(() => {
+      this.isActiveDrawer = false;
+    });
+  }
+
+  private setupCanvas() {
+    if (!this.isBrowser) return;
+
+    const canvas = this.canvasRef.nativeElement;
+    this.ctx = canvas.getContext('2d');
+    if (!this.ctx) return;
+
     this.resizeCanvas();
+    this.saveState();
+
+    canvas.addEventListener('mousedown', this.startDrawing.bind(this));
+    canvas.addEventListener('mousemove', this.draw.bind(this));
+    canvas.addEventListener('mouseup', this.stopDrawing.bind(this));
+    canvas.addEventListener('mouseout', this.stopDrawing.bind(this));
+    window.addEventListener('resize', this.resizeCanvas.bind(this));
   }
 
   private resizeCanvas() {
+    if (!this.isBrowser || !this.ctx) return;
+
     const canvas = this.canvasRef.nativeElement;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width;
@@ -128,6 +160,8 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   }
 
   private getMousePos(event: MouseEvent) {
+    if (!this.isBrowser) return { x: 0, y: 0 };
+
     const rect = this.canvasRef.nativeElement.getBoundingClientRect();
     const scaleX = this.canvasRef.nativeElement.width / rect.width;
     const scaleY = this.canvasRef.nativeElement.height / rect.height;
@@ -138,14 +172,18 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   }
 
   private startDrawing(event: MouseEvent) {
+    if (!this.isBrowser || !this.isActiveDrawer || !this.ctx) return;
+
     this.isDrawing = true;
     const pos = this.getMousePos(event);
     this.ctx.beginPath();
     this.ctx.moveTo(pos.x, pos.y);
+    this.emitDrawEvent(pos.x, pos.y, 'start');
   }
 
   private draw(event: MouseEvent) {
-    if (!this.isDrawing) return;
+    if (!this.isBrowser || !this.isActiveDrawer || !this.isDrawing || !this.ctx)
+      return;
 
     const pos = this.getMousePos(event);
 
@@ -154,45 +192,50 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
     this.ctx.lineTo(pos.x, pos.y);
     this.ctx.stroke();
 
-    this.websocketService.emit('draw', {
-      x: pos.x,
-      y: pos.y,
-      color: this.color,
-      brushSize: this.brushSize,
-      tool: this.tool,
-    });
+    this.emitDrawEvent(pos.x, pos.y, 'draw');
   }
 
   private stopDrawing() {
-    if (this.isDrawing) {
-      this.ctx.closePath();
-      this.isDrawing = false;
-      this.saveState();
-    }
+    if (!this.isBrowser || !this.isActiveDrawer || !this.isDrawing || !this.ctx)
+      return;
+
+    this.ctx.closePath();
+    this.isDrawing = false;
+    this.saveState();
+    this.emitDrawEvent(0, 0, 'end');
   }
 
-  private drawFromSocket(data: any) {
-    this.ctx.strokeStyle = data.tool === 'eraser' ? '#FFFFFF' : data.color;
-    this.ctx.lineWidth = data.brushSize;
-    this.ctx.lineTo(data.x, data.y);
-    this.ctx.stroke();
-    this.ctx.beginPath();
-    this.ctx.moveTo(data.x, data.y);
+  private emitDrawEvent(x: number, y: number, type: 'start' | 'draw' | 'end') {
+    if (!this.isBrowser) return;
+
+    this.websocketService.emit('draw', {
+      x,
+      y,
+      color: this.color,
+      brushSize: this.brushSize,
+      tool: this.tool,
+      type,
+    });
   }
 
   setColor(event: Event) {
+    if (!this.isBrowser) return;
     this.color = (event.target as HTMLInputElement).value;
   }
 
   setBrushSize(event: Event) {
+    if (!this.isBrowser) return;
     this.brushSize = parseInt((event.target as HTMLInputElement).value);
   }
 
   setTool(tool: string) {
+    if (!this.isBrowser) return;
     this.tool = tool;
   }
 
   fill() {
+    if (!this.isBrowser || !this.isActiveDrawer || !this.ctx) return;
+
     this.ctx.fillStyle = this.color;
     this.ctx.fillRect(
       0,
@@ -205,32 +248,78 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   }
 
   undo() {
+    if (!this.isBrowser || !this.isActiveDrawer || !this.ctx) return;
+
     if (this.undoStack.length > 1) {
       this.redoStack.push(this.undoStack.pop()!);
       const imageData = this.undoStack[this.undoStack.length - 1];
       this.ctx.putImageData(imageData, 0, 0);
-      this.websocketService.emit('undo', { action: 'undo' });
+      this.websocketService.emit('undo', {});
     }
   }
 
   redo() {
+    if (!this.isBrowser || !this.isActiveDrawer || !this.ctx) return;
+
     if (this.redoStack.length > 0) {
       const imageData = this.redoStack.pop()!;
       this.ctx.putImageData(imageData, 0, 0);
       this.undoStack.push(imageData);
-      this.websocketService.emit('redo', { action: 'redo' });
+      this.websocketService.emit('redo', {});
     }
   }
 
+  private drawFromSocket(data: any) {
+    if (!this.isBrowser || this.isActiveDrawer || !this.ctx) return;
+
+    if (data.type === 'start') {
+      this.ctx.beginPath();
+      this.ctx.moveTo(data.x, data.y);
+    } else if (data.type === 'draw') {
+      this.ctx.strokeStyle = data.tool === 'eraser' ? '#FFFFFF' : data.color;
+      this.ctx.lineWidth = data.brushSize;
+      this.ctx.lineTo(data.x, data.y);
+      this.ctx.stroke();
+    } else if (data.type === 'end') {
+      this.ctx.closePath();
+    }
+  }
+
+  private fillFromSocket(data: any) {
+    if (!this.isBrowser || this.isActiveDrawer || !this.ctx) return;
+
+    this.ctx.fillStyle = data.color;
+    this.ctx.fillRect(
+      0,
+      0,
+      this.canvasRef.nativeElement.width,
+      this.canvasRef.nativeElement.height
+    );
+  }
+
   private undoFromSocket() {
-    this.undo();
+    if (!this.isBrowser || this.isActiveDrawer || !this.ctx) return;
+
+    if (this.undoStack.length > 1) {
+      this.redoStack.push(this.undoStack.pop()!);
+      const imageData = this.undoStack[this.undoStack.length - 1];
+      this.ctx.putImageData(imageData, 0, 0);
+    }
   }
 
   private redoFromSocket() {
-    this.redo();
+    if (!this.isBrowser || this.isActiveDrawer || !this.ctx) return;
+
+    if (this.redoStack.length > 0) {
+      const imageData = this.redoStack.pop()!;
+      this.ctx.putImageData(imageData, 0, 0);
+      this.undoStack.push(imageData);
+    }
   }
 
   private saveState() {
+    if (!this.isBrowser || !this.ctx) return;
+
     const imageData = this.ctx.getImageData(
       0,
       0,

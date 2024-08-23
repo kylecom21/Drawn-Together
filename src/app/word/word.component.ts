@@ -1,17 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Word } from '../../../api';
+import { WebsocketService } from '../web-socket.service';
 import { WordLengthComponent } from '../word-length/word-length.component';
+import { Word } from '../../../api';
 
 @Component({
   selector: 'app-word',
   standalone: true,
   imports: [CommonModule, WordLengthComponent],
   template: `
-    <div class="word-container">
-      <h2 class="word-title">Current Word:</h2>
-      <div class="word-info">
-        <div class="word-display">{{ word }}</div>
+    <div *ngIf="isActiveDrawer" class="text-center font-bold text-xl">
+      <div class="word-container">
+        <h2 class="word-title">Current Word:</h2>
+        <div class="word-info">
+          <div class="word-display">{{ word }}</div>
+          <app-word-length [word]="word"></app-word-length>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="!isActiveDrawer" class="text-center font-bold text-xl">
+      <div class="word-container">
         <app-word-length [word]="word"></app-word-length>
       </div>
     </div>
@@ -52,12 +60,32 @@ import { WordLengthComponent } from '../word-length/word-length.component';
 })
 export class WordComponent implements OnInit {
   word: string = '';
+  isActiveDrawer: boolean = false;
 
-  constructor(private wordService: Word) {}
+  constructor(
+    private websocketService: WebsocketService,
+    private wordService: Word
+  ) {}
 
-  ngOnInit(): void {
+  ngOnInit() {
+    this.setupSocketListeners();
+
     this.wordService.getWord().subscribe((response) => {
       this.word = response.word;
+    });
+  }
+
+  private setupSocketListeners() {
+    this.websocketService.listen('new-word').subscribe((data: any) => {
+      this.word = data.word;
+    });
+
+    this.websocketService.listen('start-drawing').subscribe(() => {
+      this.isActiveDrawer = true;
+    });
+
+    this.websocketService.listen('end-drawing').subscribe(() => {
+      this.isActiveDrawer = false;
     });
   }
 }
