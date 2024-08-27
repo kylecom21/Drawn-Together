@@ -3,6 +3,11 @@ import { io, Socket } from 'socket.io-client';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { environment } from './environments/environment';
 
+interface ChatMessage {
+  name: string;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -12,6 +17,9 @@ export class WebsocketService {
     'Connecting' | 'Connected' | 'Disconnected'
   >('Disconnected');
   public connectionStatus$ = this.connectionStatusSubject.asObservable();
+
+  private messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
+  public messages$ = this.messagesSubject.asObservable();
 
   constructor() {
     this.socket = io(environment.websocketUrl, {
@@ -27,6 +35,10 @@ export class WebsocketService {
     this.socket.on('disconnect', () => {
       console.log('WebSocket disconnected');
       this.connectionStatusSubject.next('Disconnected');
+    });
+
+    this.socket.on('chat-message', (data: ChatMessage) => {
+      this.addMessage(data);
     });
   }
 
@@ -49,5 +61,14 @@ export class WebsocketService {
         subscriber.next(data);
       });
     });
+  }
+
+  addMessage(message: ChatMessage) {
+    const currentMessages = this.messagesSubject.value;
+    this.messagesSubject.next([...currentMessages, message]);
+  }
+
+  getMessages(): ChatMessage[] {
+    return this.messagesSubject.value;
   }
 }
