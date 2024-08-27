@@ -15,6 +15,11 @@ export class GameStateService {
   public currentWord$: Observable<string> =
     this.currentWordSubject.asObservable();
 
+  private timerSubject: BehaviorSubject<number> = new BehaviorSubject<number>(
+    0
+  ); // Timer in seconds
+  public timer$: Observable<number> = this.timerSubject.asObservable();
+
   constructor() {}
 
   setActiveDrawer(isActive: boolean): void {
@@ -31,5 +36,17 @@ export class GameStateService {
 
   getCurrentWord(): Observable<string> {
     return this.currentWord$;
+  }
+
+  startTimer(duration: number): void {
+    this.timerSubject.next(duration);
+    const timerInterval = setInterval(() => {
+      const currentTime = this.timerSubject.value;
+      if (currentTime > 0) {
+        this.timerSubject.next(currentTime - 1);
+      } else {
+        clearInterval(timerInterval);
+      }
+    }, 1000);
   }
 }

@@ -25,9 +25,9 @@ import { Subscription } from 'rxjs';
         <div #messageContainer class="message-container">
           <div
             *ngFor="let message of messages"
-            [ngClass]="{ 'own-message': message.isOwnMessage }"
+            [ngClass]="{ 'own-message': message.startsWith('You:') }"
           >
-            <strong>{{ message.name }}:</strong> {{ message.message }}
+            {{ message }}
           </div>
         </div>
         <form (ngSubmit)="sendMessage()">
@@ -98,7 +98,7 @@ import { Subscription } from 'rxjs';
 export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messageContainer') private messageContainer: ElementRef;
 
-  messages: { name: string; message: string; isOwnMessage: boolean }[] = [];
+  messages: string[] = [];
   messageInput = '';
   name: string = '';
   isConnected: boolean = false;
@@ -108,7 +108,6 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnInit() {
     this.initializeWebSocketListeners();
-    this.messages = this.websocketService.getMessages();
   }
 
   ngOnDestroy() {
@@ -121,14 +120,17 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   sendMessage() {
     if (this.messageInput.trim()) {
-      const message = {
+      this.websocketService.emit('send-chat-message', {
         name: this.name,
         message: this.messageInput,
-        isOwnMessage: false,
-      };
-      this.websocketService.sendMessage(message);
+      });
+      this.appendMessage(`You: ${this.messageInput}`);
       this.messageInput = '';
     }
+  }
+
+  private appendMessage(message: string) {
+    this.messages.push(message);
   }
 
   private scrollToBottom(): void {
@@ -146,37 +148,29 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.joinChat();
         }
       }),
-      this.websocketService.messages$.subscribe((messages) => {
-        this.messages = messages;
+      this.websocketService.listen('chat-message').subscribe((data: any) => {
+        if (data.name === 'System') {
+          this.appendMessage(data.message);
+        } else {
+          this.appendMessage(`${data.name}: ${data.message}`);
+        }
       }),
       this.websocketService
         .listen('user-connected')
         .subscribe((name: string) => {
-          this.websocketService.addMessage({
-            name: 'System',
-            message: `${name} connected`,
-            isOwnMessage: false,
-          });
+          this.appendMessage(`${name} connected`);
         }),
       this.websocketService
         .listen('user-disconnected')
         .subscribe((name: string) => {
-          this.websocketService.addMessage({
-            name: 'System',
-            message: `${name} disconnected`,
-            isOwnMessage: false,
-          });
+          this.appendMessage(`${name} disconnected`);
         })
     );
   }
 
   private joinChat() {
     this.name = this.generateRandomName();
-    this.websocketService.addMessage({
-      name: 'System',
-      message: `You joined as ${this.name}`,
-      isOwnMessage: false,
-    });
+    this.appendMessage(`You joined as ${this.name}`);
     this.websocketService.emit('new-user', this.name);
   }
 
