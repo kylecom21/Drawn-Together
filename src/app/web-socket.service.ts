@@ -18,7 +18,10 @@ export class WebsocketService {
 
   connect() {
     this.socket.connect();
-    console.log(this.socket);
+    this.socket.on('connect', () => {
+      console.log('WebSocket connected');
+      this.socket.emit('connection-established');
+    });
   }
 
   disconnect() {
