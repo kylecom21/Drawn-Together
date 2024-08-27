@@ -19,7 +19,7 @@ export class WordLengthComponent implements OnChanges {
   wordLength: number = 0;
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['word'] && changes['word'].currentValue) {
+    if (changes['word'] && changes['word'].currentValue !== undefined) {
       this.wordLength = this.word.length;
     }
   }
