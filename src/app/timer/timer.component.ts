@@ -37,21 +37,18 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log('TimerComponent initialized');
     if (this.isBrowser) {
       this.startTimer(1);
     }
   }
 
   ngOnDestroy() {
-    console.log('TimerComponent destroyed');
     this.stopTimer();
   }
 
   startTimer(minutes: number) {
     if (!this.isBrowser) return;
 
-    console.log(`Starting timer for ${minutes} minute(s)`);
     this.stopTimer(); // Ensure any existing timer is stopped
     let seconds: number = minutes * this.SECONDS_IN_MINUTE;
     const prefix = minutes < 10 ? '0' : '';
@@ -65,10 +62,8 @@ export class TimerComponent implements OnInit, OnDestroy {
         this.display = `${prefix}${minutesRemaining}:${secondsRemaining
           .toString()
           .padStart(2, '0')}`;
-        console.log(`Timer update: ${this.display}`);
 
         if (seconds === 0) {
-          console.log('Timer finished');
           this.stopTimer();
         }
       });
