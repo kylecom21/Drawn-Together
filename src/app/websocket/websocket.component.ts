@@ -9,46 +9,55 @@ import { Subscription } from 'rxjs';
   imports: [CommonModule],
   template: `
     <div class="space-y-4">
-      <div class="flex flex-wrap gap-2 justify-center">
-        <button
-          (click)="connect()"
-          class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+      <div class="flex flex-col items-center">
+        <div
+          class="mb-4 px-4 py-2 rounded-full font-semibold text-sm"
+          [ngClass]="{
+            'bg-yellow-200 text-yellow-800': connectionStatus === 'Connecting',
+            'bg-green-200 text-green-800': connectionStatus === 'Connected',
+            'bg-red-200 text-red-800': connectionStatus === 'Disconnected'
+          }"
         >
-          Connect
-        </button>
-        <button
-          (click)="disconnect()"
-          class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-        >
-          Disconnect
-        </button>
-        <button
-          (click)="sendMessage()"
-          class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          Send Test Message
-        </button>
-      </div>
-      <div class="mt-4 bg-gray-100 p-4 rounded-lg max-h-40 overflow-y-auto">
-        <div *ngFor="let message of messages" class="text-sm text-gray-700">
-          {{ message }}
+          {{ connectionStatus }}
+        </div>
+        <div class="flex flex-wrap gap-2 justify-center">
+          <button
+            (click)="connect()"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 font-semibold"
+            [disabled]="connectionStatus === 'Connected'"
+          >
+            Connect
+          </button>
+          <button
+            (click)="disconnect()"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300 font-semibold"
+            [disabled]="connectionStatus === 'Disconnected'"
+          >
+            Disconnect
+          </button>
+          <button
+            (click)="sendMessage()"
+            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300 font-semibold"
+            [disabled]="connectionStatus !== 'Connected'"
+          >
+            Send Test Message
+          </button>
         </div>
       </div>
     </div>
   `,
 })
 export class WebsocketTestComponent implements OnInit, OnDestroy {
-  messages: string[] = [];
   private subscription: Subscription | undefined;
+  connectionStatus: 'Connecting' | 'Connected' | 'Disconnected' =
+    'Disconnected';
 
   constructor(private websocketService: WebsocketService) {}
 
   ngOnInit() {
-    this.subscription = this.websocketService
-      .listen('message')
-      .subscribe((data: any) => {
-        this.messages.push(data);
-      });
+    this.websocketService.connectionStatus$.subscribe(
+      (status) => (this.connectionStatus = status)
+    );
   }
 
   ngOnDestroy() {
@@ -60,13 +69,10 @@ export class WebsocketTestComponent implements OnInit, OnDestroy {
 
   connect() {
     this.websocketService.connect();
-    this.messages.push('Attempting to connect...');
-    this.websocketService.emit('connection-established', {});
   }
 
   disconnect() {
     this.websocketService.disconnect();
-    this.messages.push('Disconnected from server');
   }
 
   sendMessage() {
