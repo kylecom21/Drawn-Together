@@ -35,13 +35,6 @@ import { Subscription } from 'rxjs';
           >
             Disconnect
           </button>
-          <button
-            (click)="sendMessage()"
-            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300 font-semibold"
-            [disabled]="connectionStatus !== 'Connected'"
-          >
-            Send Test Message
-          </button>
         </div>
       </div>
     </div>
@@ -55,7 +48,7 @@ export class WebsocketTestComponent implements OnInit, OnDestroy {
   constructor(private websocketService: WebsocketService) {}
 
   ngOnInit() {
-    this.websocketService.connectionStatus$.subscribe(
+    this.subscription = this.websocketService.connectionStatus$.subscribe(
       (status) => (this.connectionStatus = status)
     );
   }
@@ -64,7 +57,6 @@ export class WebsocketTestComponent implements OnInit, OnDestroy {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
-    this.disconnect();
   }
 
   connect() {
@@ -73,9 +65,5 @@ export class WebsocketTestComponent implements OnInit, OnDestroy {
 
   disconnect() {
     this.websocketService.disconnect();
-  }
-
-  sendMessage() {
-    this.websocketService.emit('message', 'Test message from Angular');
   }
 }
