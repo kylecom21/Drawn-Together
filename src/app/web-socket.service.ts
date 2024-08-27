@@ -6,6 +6,7 @@ import { environment } from './environments/environment';
 interface ChatMessage {
   name: string;
   message: string;
+  isOwnMessage: boolean;
 }
 
 @Injectable({
@@ -38,7 +39,7 @@ export class WebsocketService {
     });
 
     this.socket.on('chat-message', (data: ChatMessage) => {
-      this.addMessage(data);
+      this.addMessage({ ...data, isOwnMessage: false });
     });
   }
 
@@ -70,5 +71,10 @@ export class WebsocketService {
 
   getMessages(): ChatMessage[] {
     return this.messagesSubject.value;
+  }
+
+  sendMessage(message: ChatMessage) {
+    this.socket.emit('send-chat-message', message);
+    this.addMessage({ ...message, isOwnMessage: true });
   }
 }

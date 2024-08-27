@@ -25,7 +25,7 @@ import { Subscription } from 'rxjs';
         <div #messageContainer class="message-container">
           <div
             *ngFor="let message of messages"
-            [ngClass]="{ 'own-message': message.name === name }"
+            [ngClass]="{ 'own-message': message.isOwnMessage }"
           >
             <strong>{{ message.name }}:</strong> {{ message.message }}
           </div>
@@ -98,7 +98,7 @@ import { Subscription } from 'rxjs';
 export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messageContainer') private messageContainer: ElementRef;
 
-  messages: { name: string; message: string }[] = [];
+  messages: { name: string; message: string; isOwnMessage: boolean }[] = [];
   messageInput = '';
   name: string = '';
   isConnected: boolean = false;
@@ -121,9 +121,12 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   sendMessage() {
     if (this.messageInput.trim()) {
-      const message = { name: this.name, message: this.messageInput };
-      this.websocketService.emit('send-chat-message', message);
-      this.websocketService.addMessage(message);
+      const message = {
+        name: this.name,
+        message: this.messageInput,
+        isOwnMessage: false,
+      };
+      this.websocketService.sendMessage(message);
       this.messageInput = '';
     }
   }
@@ -152,6 +155,7 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.websocketService.addMessage({
             name: 'System',
             message: `${name} connected`,
+            isOwnMessage: false,
           });
         }),
       this.websocketService
@@ -160,6 +164,7 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.websocketService.addMessage({
             name: 'System',
             message: `${name} disconnected`,
+            isOwnMessage: false,
           });
         })
     );
@@ -170,6 +175,7 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.websocketService.addMessage({
       name: 'System',
       message: `You joined as ${this.name}`,
+      isOwnMessage: false,
     });
     this.websocketService.emit('new-user', this.name);
   }
