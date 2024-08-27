@@ -70,9 +70,12 @@ export class WordComponent implements OnInit {
   ngOnInit() {
     this.setupSocketListeners();
 
-    this.wordService.getWord().subscribe((response) => {
-      this.word = response.word;
-    });
+    // if it's the active drawer generate word
+    if (this.isActiveDrawer) {
+      this.wordService.getWord().subscribe((response) => {
+        this.word = response.word;
+      });
+    }
   }
 
   private setupSocketListeners() {
