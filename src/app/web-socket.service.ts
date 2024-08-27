@@ -18,7 +18,7 @@ export class WebsocketService {
 
   connect() {
     this.socket.connect();
-    console.log(this.socket);
+    console.log(this);
   }
 
   disconnect() {
