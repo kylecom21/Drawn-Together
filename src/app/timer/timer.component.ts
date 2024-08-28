@@ -18,13 +18,15 @@ import { WebsocketService } from '../web-socket.service'; // Import WebSocketSer
     <div class="timer text-center font-sans">
       <h2 class="text-xl font-semibold mb-2">Timer</h2>
       <div class="display text-4xl font-bold mb-4">{{ display }}</div>
+      <div class="timer-btn">
       <button
         *ngIf="isActiveDrawer"
         (click)="startTimer(1)"
-        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200 ease-in-out"
+        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-grey-500 transition duration-200 ease-in-out"
       >
         Start 1 Minute Timer
       </button>
+</div>
     </div>
   `,
 })

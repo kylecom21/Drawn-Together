@@ -47,12 +47,16 @@ import { Subscription } from 'rxjs';
         max-width: 600px;
         margin: 0 auto;
         font-family: Arial, sans-serif;
+        background-color: #C8D3BE;
+        padding-top: 7px;
+        padding-bottom: 1px;
       }
       .connection-status,
       .user-info {
         margin-bottom: 10px;
         text-align: center;
         font-weight: bold;
+        background-color: #C8D3BE;
       }
       .message-container {
         height: 400px;
@@ -60,34 +64,35 @@ import { Subscription } from 'rxjs';
         border: 1px solid #ccc;
         padding: 10px;
         margin-bottom: 10px;
-        background-color: #f9f9f9;
+        background-color: #C8D3BE ;
       }
       .message-container div {
         margin-bottom: 5px;
         padding: 5px;
         border-radius: 5px;
-        background-color: #e1e1e1;
+        background-color: #969F8E;
+        color: white;
       }
       .own-message {
         text-align: right;
-        background-color: #d1e7dd !important;
+        background-color: #7A8273!important;
       }
       form {
         display: flex;
       }
       input {
         flex-grow: 1;
-        padding: 10px;
         border: 1px solid #ccc;
         border-radius: 4px 0 0 4px;
+        padding: 2px;
       }
       button {
-        padding: 10px 20px;
-        background-color: #007bff;
+        background-color: gray;
         color: white;
         border: none;
         border-radius: 0 4px 4px 0;
         cursor: pointer;
+        padding: 5px;
       }
       button:hover {
         background-color: #0056b3;

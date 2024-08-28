@@ -19,12 +19,12 @@ import { WordComponent } from './word/word.component';
   ],
   template: `
     <div class="min-h-screen bg-gray-100 flex flex-col">
-      <header class="bg-white shadow">
+      <header class="bg-white shadow text-center">
         <div
           class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center"
         >
-          <h1 class="text-2xl font-bold text-gray-900">Drawing Game</h1>
-          <nav>
+          <h1 class="text-2xl font-bold text-gray-900">Drawn Together</h1>
+          <!-- <nav>
             <ul class="flex space-x-4">
               <li>
                 <a href="#" class="text-gray-600 hover:text-gray-900">Home</a>
@@ -38,10 +38,10 @@ import { WordComponent } from './word/word.component';
                 >
               </li>
             </ul>
-          </nav>
+          </nav> -->
         </div>
       </header>
-      <main class="flex-grow">
+      <main class="main-page">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div class="mb-6 bg-white shadow rounded-lg p-4">
             <app-word></app-word>
@@ -70,5 +70,5 @@ import { WordComponent } from './word/word.component';
   `,
 })
 export class AppComponent {
-  title = 'Drawing Game';
+  title = 'Drawn Together';
 }

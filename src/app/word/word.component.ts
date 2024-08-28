@@ -59,6 +59,9 @@ import { Subscription } from 'rxjs';
         display: inline-block;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       }
+      .word-container{
+        background-color: #C8D3BE;
+      }
     `,
   ],
 })

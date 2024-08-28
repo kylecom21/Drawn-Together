@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
   standalone: true,
   imports: [CommonModule],
   template: `
+  <div class="connection-btn">
     <div class="space-y-4">
       <div class="flex flex-col items-center">
         <div
@@ -23,14 +24,14 @@ import { Subscription } from 'rxjs';
         <div class="flex flex-wrap gap-2 justify-center">
           <button
             (click)="connect()"
-            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 font-semibold"
+            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-300 font-semibold"
             [disabled]="connectionStatus === 'Connected'"
           >
             Connect
           </button>
           <button
             (click)="disconnect()"
-            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300 font-semibold"
+            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-300 font-semibold"
             [disabled]="connectionStatus === 'Disconnected'"
           >
             Disconnect
@@ -38,6 +39,7 @@ import { Subscription } from 'rxjs';
         </div>
       </div>
     </div>
+        </div>
   `,
 })
 export class WebsocketTestComponent implements OnInit, OnDestroy {

@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.timer{
+    background-color: #C8D3BE;
+    padding-bottom: 3px;
+    padding-top: 5px;
+}
+.connection-btn{
+    background-color: #C8D3BE;
+    padding: 10px;
+}
+.main-page{
+    background-color: rgb(196, 196, 196);
+}
+.timer-btn{
+    padding: 10px;
+}
+h1{
+    font-family: monospace;
+}
