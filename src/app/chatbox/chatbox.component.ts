@@ -37,7 +37,6 @@ import { Subscription } from 'rxjs';
             placeholder="Type a message"
             [disabled]="isRoundOver"
           />
-          />
           <button type="submit" [disabled]="isRoundOver">Send</button>
         </form>
       </div>
