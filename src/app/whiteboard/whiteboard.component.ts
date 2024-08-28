@@ -11,6 +11,7 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { WebsocketService } from '../web-socket.service';
 import { WordComponent } from '../word/word.component';
+import { GameStateService } from '../game-state.service';
 
 @Component({
   selector: 'app-whiteboard',
@@ -84,7 +85,8 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   constructor(
     private websocketService: WebsocketService,
     @Inject(PLATFORM_ID) private platformId: Object,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private gameStateService: GameStateService
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
@@ -92,6 +94,9 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     if (this.isBrowser) {
       this.setupSocketListeners();
+      this.gameStateService.isActiveDrawer$.subscribe((isActive) => {
+        this.isActiveDrawer = isActive;
+      });
     }
   }
 
@@ -123,11 +128,21 @@ export class WhiteboardComponent implements OnInit, AfterViewInit {
     });
 
     this.websocketService.listen('start-drawing').subscribe(() => {
-      this.isActiveDrawer = true;
+      this.gameStateService.setActiveDrawer(true);
     });
 
     this.websocketService.listen('end-drawing').subscribe(() => {
-      this.isActiveDrawer = false;
+      this.gameStateService.setActiveDrawer(false);
+    });
+
+    this.websocketService.listen('new-word').subscribe((data: any) => {
+      console.log('New word received in Whiteboard:', data.word);
+      this.gameStateService.setCurrentWord(data.word);
+    });
+
+    this.websocketService.listen('current-word').subscribe((data: any) => {
+      console.log('Current word received in Whiteboard:', data.word);
+      this.gameStateService.setCurrentWord(data.word);
     });
   }
 

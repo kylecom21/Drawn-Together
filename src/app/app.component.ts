@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WebsocketTestComponent } from './websocket-test/websocket-test.component';
+import { WebsocketTestComponent } from './websocket/websocket.component';
 import { TimerComponent } from './timer/timer.component';
 import { ChatboxComponent } from './chatbox/chatbox.component';
 import { WhiteboardComponent } from './whiteboard/whiteboard.component';
 import { WordComponent } from './word/word.component';
-import { WordLengthComponent } from './word-length/word-length.component';
 
 @Component({
   selector: 'app-root',
@@ -17,7 +16,6 @@ import { WordLengthComponent } from './word-length/word-length.component';
     ChatboxComponent,
     WhiteboardComponent,
     WordComponent,
-    WordLengthComponent,
   ],
   template: `
     <div class="min-h-screen bg-gray-100 flex flex-col">

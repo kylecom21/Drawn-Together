@@ -1,26 +1,29 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WebsocketService } from '../web-socket.service';
-import { WordLengthComponent } from '../word-length/word-length.component';
 import { Word } from '../../../api';
+import { GameStateService } from '../game-state.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-word',
   standalone: true,
-  imports: [CommonModule, WordLengthComponent],
+  imports: [CommonModule],
   template: `
-    <div *ngIf="isActiveDrawer" class="text-center font-bold text-xl">
+    <div class="text-center font-bold text-xl">
       <div class="word-container">
-        <h2 class="word-title">Current Word:</h2>
-        <div class="word-info">
-          <div class="word-display">{{ word }}</div>
-          <app-word-length [word]="word"></app-word-length>
-        </div>
-      </div>
-    </div>
-    <div *ngIf="!isActiveDrawer" class="text-center font-bold text-xl">
-      <div class="word-container">
-        <app-word-length [word]="word"></app-word-length>
+        <ng-container *ngIf="isActiveDrawer; else guesser">
+          <h2 class="word-title">Current Word:</h2>
+          <div class="word-info">
+            <div class="word-display">{{ word }}</div>
+          </div>
+        </ng-container>
+        <ng-template #guesser>
+          <h2 class="word-title">Guess the word!</h2>
+          <div class="word-length-display">
+            Word Length: {{ word ? word.length : 0 }}
+          </div>
+        </ng-template>
       </div>
     </div>
   `,
@@ -45,7 +48,8 @@ import { Word } from '../../../api';
         align-items: center;
         gap: 1rem;
       }
-      .word-display {
+      .word-display,
+      .word-length-display {
         font-size: 2rem;
         font-weight: bold;
         color: #2d3748;
@@ -58,38 +62,45 @@ import { Word } from '../../../api';
     `,
   ],
 })
-export class WordComponent implements OnInit {
+export class WordComponent implements OnInit, OnDestroy {
   word: string = '';
   isActiveDrawer: boolean = false;
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private websocketService: WebsocketService,
-    private wordService: Word
+    private wordService: Word,
+    private gameStateService: GameStateService
   ) {}
 
   ngOnInit() {
-    this.setupSocketListeners();
-    console.log(this.isActiveDrawer);
-
-    // if it's the active drawer generate word
-    if (this.isActiveDrawer) {
-      this.wordService.getWord().subscribe((response) => {
-        this.word = response.word;
-      });
-    }
+    console.log('WordComponent initialized');
+    this.subscriptions.push(
+      this.gameStateService.isActiveDrawer$.subscribe((isActive) => {
+        console.log('Is active drawer:', isActive);
+        this.isActiveDrawer = isActive;
+        if (isActive) {
+          this.generateWord();
+        } else {
+          this.websocketService.emit('request-current-word', {});
+        }
+      }),
+      this.gameStateService.currentWord$.subscribe((word) => {
+        console.log('Current word updated:', word, 'Length:', word.length);
+        this.word = word;
+      })
+    );
   }
 
-  private setupSocketListeners() {
-    this.websocketService.listen('new-word').subscribe((data: any) => {
-      this.word = data.word;
-    });
+  ngOnDestroy() {
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
+  }
 
-    this.websocketService.listen('start-drawing').subscribe(() => {
-      this.isActiveDrawer = true;
-    });
-
-    this.websocketService.listen('end-drawing').subscribe(() => {
-      this.isActiveDrawer = false;
+  private generateWord() {
+    this.wordService.getWord().subscribe((response) => {
+      console.log('New word generated:', response.word);
+      this.gameStateService.setCurrentWord(response.word);
+      this.websocketService.emit('new-word', { word: response.word });
     });
   }
 }
