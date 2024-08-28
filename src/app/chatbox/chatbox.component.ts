@@ -30,13 +30,15 @@ import { Subscription } from 'rxjs';
             {{ message }}
           </div>
         </div>
-        <form (ngSubmit)="sendMessage()">
+        <form (ngSubmit)="sendMessage()" *ngIf="!isRoundOver">
           <input
             [(ngModel)]="messageInput"
             name="messageInput"
             placeholder="Type a message"
+            [disabled]="isRoundOver"
           />
-          <button type="submit">Send</button>
+          />
+          <button type="submit" [disabled]="isRoundOver">Send</button>
         </form>
       </div>
     </div>
@@ -47,7 +49,7 @@ import { Subscription } from 'rxjs';
         max-width: 600px;
         margin: 0 auto;
         font-family: Arial, sans-serif;
-        background-color: #C8D3BE;
+        background-color: #c8d3be;
         padding-top: 7px;
         padding-bottom: 1px;
       }
@@ -56,7 +58,7 @@ import { Subscription } from 'rxjs';
         margin-bottom: 10px;
         text-align: center;
         font-weight: bold;
-        background-color: #C8D3BE;
+        background-color: #c8d3be;
       }
       .message-container {
         height: 400px;
@@ -64,18 +66,18 @@ import { Subscription } from 'rxjs';
         border: 1px solid #ccc;
         padding: 10px;
         margin-bottom: 10px;
-        background-color: #C8D3BE ;
+        background-color: #c8d3be;
       }
       .message-container div {
         margin-bottom: 5px;
         padding: 5px;
         border-radius: 5px;
-        background-color: #969F8E;
+        background-color: #969f8e;
         color: white;
       }
       .own-message {
         text-align: right;
-        background-color: #7A8273!important;
+        background-color: #7a8273 !important;
       }
       form {
         display: flex;
@@ -107,6 +109,7 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
   messageInput = '';
   name: string = '';
   isConnected: boolean = false;
+  isRoundOver: boolean = false;
   private subscriptions: Subscription[] = [];
 
   constructor(private websocketService: WebsocketService) {}
@@ -169,7 +172,11 @@ export class ChatboxComponent implements OnInit, OnDestroy, AfterViewChecked {
         .listen('user-disconnected')
         .subscribe((name: string) => {
           this.appendMessage(`${name} disconnected`);
-        })
+        }),
+      this.websocketService.listen('timer-ended').subscribe(() => {
+        this.isRoundOver = true; 
+        this.appendMessage('Round Over'); 
+      })
     );
   }
 
