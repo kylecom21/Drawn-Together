@@ -6,8 +6,9 @@ import {
   Inject,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { interval, Subscription } from 'rxjs';
-import { takeWhile } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { GameStateService } from '../game-state.service'; // Ensure GameStateService is imported
+import { WebsocketService } from '../web-socket.service'; // Import WebSocketService
 
 @Component({
   selector: 'app-timer',
@@ -18,6 +19,7 @@ import { takeWhile } from 'rxjs/operators';
       <h2 class="text-xl font-semibold mb-2">Timer</h2>
       <div class="display text-4xl font-bold mb-4">{{ display }}</div>
       <button
+        *ngIf="isActiveDrawer"
         (click)="startTimer(1)"
         class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200 ease-in-out"
       >
@@ -29,50 +31,57 @@ import { takeWhile } from 'rxjs/operators';
 export class TimerComponent implements OnInit, OnDestroy {
   display: string = '01:00';
   private timerSubscription: Subscription | null = null;
+  private socketSubscription: Subscription | null = null; // New subscription for WebSocket
   private readonly SECONDS_IN_MINUTE = 60;
   private isBrowser: boolean;
+  isActiveDrawer: boolean = false; // To track if the user is the active drawer
 
-  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+  constructor(
+    @Inject(PLATFORM_ID) platformId: Object,
+    private gameStateService: GameStateService, // Inject GameStateService
+    private websocketService: WebsocketService // Inject WebSocketService
+  ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
   ngOnInit() {
     if (this.isBrowser) {
-      this.startTimer(1);
+      // Subscribe to the active drawer state
+      this.gameStateService.isActiveDrawer$.subscribe((isActive) => {
+        this.isActiveDrawer = isActive;
+      });
+
+      // Subscribe to timer updates from the WebSocket
+      this.socketSubscription = this.websocketService
+        .listen('timer-update')
+        .subscribe((duration: number) => {
+          this.updateDisplay(duration);
+        });
+
+      // Subscribe to timer end event
+      this.websocketService.listen('timer-ended').subscribe(() => {
+        this.display = '00:00';
+      });
     }
   }
 
   ngOnDestroy() {
-    this.stopTimer();
+    if (this.socketSubscription) {
+      this.socketSubscription.unsubscribe();
+    }
   }
 
   startTimer(minutes: number) {
-    if (!this.isBrowser) return;
+    if (!this.isBrowser || !this.isActiveDrawer) return; // Check if active drawer
 
-    this.stopTimer(); // Ensure any existing timer is stopped
-    let seconds: number = minutes * this.SECONDS_IN_MINUTE;
-    const prefix = minutes < 10 ? '0' : '';
-
-    this.timerSubscription = interval(1000)
-      .pipe(takeWhile(() => seconds > 0))
-      .subscribe(() => {
-        seconds--;
-        const minutesRemaining = Math.floor(seconds / this.SECONDS_IN_MINUTE);
-        const secondsRemaining = seconds % this.SECONDS_IN_MINUTE;
-        this.display = `${prefix}${minutesRemaining}:${secondsRemaining
-          .toString()
-          .padStart(2, '0')}`;
-
-        if (seconds === 0) {
-          this.stopTimer();
-        }
-      });
+    this.websocketService.emit('start-timer', minutes * this.SECONDS_IN_MINUTE); // Emit start timer event to the server
   }
 
-  private stopTimer() {
-    if (this.timerSubscription) {
-      this.timerSubscription.unsubscribe();
-      this.timerSubscription = null;
-    }
+  private updateDisplay(seconds: number) {
+    const minutesRemaining = Math.floor(seconds / this.SECONDS_IN_MINUTE);
+    const secondsRemaining = seconds % this.SECONDS_IN_MINUTE;
+    this.display = `${minutesRemaining
+      .toString()
+      .padStart(2, '0')}:${secondsRemaining.toString().padStart(2, '0')}`;
   }
 }
