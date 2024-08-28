@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  websocketUrl: 'https://drawn-together.netlify.app/',
+  websocketUrl: 'https://drawntogether-backend.onrender.com/',
 };
