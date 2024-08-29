@@ -1,4 +1,5 @@
 # DrawnTogether
+Drawn Together is a web app that allows multiple users to join together online to play a simple drawing game. One player is given a word and draws it on the on-screen whiteboard. The other players connected to the game guess what the word is from the picture. Players guesses are submitted through a chatbox feature and feedback is given via a message response.
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.0.
 
